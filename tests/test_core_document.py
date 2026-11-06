@@ -133,3 +133,11 @@ def test_linhas_trazem_tamanho_de_fonte(pdf_simples):
         assert linhas[0].page == 1
         assert "Combate" in linhas[0].text
         assert linhas[0].size == 14.0
+
+
+def test_png_com_grifo_nao_deixa_anotacao_na_pagina(pdf_simples):
+    with PdfDocument(pdf_simples) as doc:
+        com = doc.render_page_png(1, RenderOptions(zoom=1.0, highlight="Dragao"))
+        sem = doc.render_page_png(1, RenderOptions(zoom=1.0))
+        assert com != sem  # o grifo aparece
+        assert doc.render_page_png(1, RenderOptions(zoom=1.0)) == sem  # e não fica para trás

@@ -247,7 +247,18 @@ class PdfDocument:
         self._validar_pagina(page)
         opts = options or RenderOptions()
         pagina = self._doc.load_page(page)
-        pix = pagina.get_pixmap(matrix=pymupdf.Matrix(opts.zoom, opts.zoom), alpha=False)
+        anotacoes = []
+        if opts.highlight:
+            for rect in pagina.search_for(opts.highlight):
+                annot = pagina.add_highlight_annot(rect)
+                annot.set_colors(stroke=(1, 1, 0))
+                annot.update()
+                anotacoes.append(annot)
+        try:
+            pix = pagina.get_pixmap(matrix=pymupdf.Matrix(opts.zoom, opts.zoom), alpha=False)
+        finally:
+            for annot in anotacoes:
+                pagina.delete_annot(annot)
         return pix.tobytes("png")
 
     def render_thumbnail(self, page: int, scale: float = 0.2) -> RenderedPage:
