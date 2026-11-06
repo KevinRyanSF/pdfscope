@@ -102,7 +102,7 @@ class PdfDocument:
         self._page_cache = _LruCache(page_cache_size)
         self._thumb_cache = _LruCache(thumb_cache_size)
         self._text_cache: dict[int, str] = {}
-        self._raw_cache: dict[int, str] = {}
+        self._raw_cache: dict[tuple[int, bool], str] = {}
         self._toc: list[TocEntry] | None = None
         self._closed = False
 
@@ -142,21 +142,27 @@ class PdfDocument:
             self._text_cache[page] = self._doc.load_page(page).get_text("text").lower()
         return self._text_cache[page]
 
-    def page_text_raw(self, page: int) -> str:
-        """Texto da página como está no PDF (maiúsculas preservadas), em ordem de leitura.
+    def page_text_raw(self, page: int, *, sort: bool = False) -> str:
+        """Texto da página como está no PDF (maiúsculas preservadas).
 
         `page_text` é minúsculo porque existe para a busca; para extrair conteúdo
         (nomes de magias, títulos) use este.
+
+        Por padrão sai na ordem do próprio PDF, que em livros diagramados respeita as
+        colunas. `sort=True` ordena os blocos por posição (de cima para baixo, da
+        esquerda para a direita) — bom para páginas soltas, mas em página de DUAS
+        COLUNAS intercala as colunas e embaralha o texto.
         """
         self._validar_pagina(page)
-        if page not in self._raw_cache:
-            self._raw_cache[page] = self._doc.load_page(page).get_text("text", sort=True)
-        return self._raw_cache[page]
+        chave = (page, sort)
+        if chave not in self._raw_cache:
+            self._raw_cache[chave] = self._doc.load_page(page).get_text("text", sort=sort)
+        return self._raw_cache[chave]
 
-    def page_lines(self, page: int) -> list[TextLine]:
-        """Linhas da página com tamanho de fonte e negrito, em ordem de leitura."""
+    def page_lines(self, page: int, *, sort: bool = False) -> list[TextLine]:
+        """Linhas da página com tamanho de fonte e negrito (mesma ordem de `page_text_raw`)."""
         self._validar_pagina(page)
-        bruto = self._doc.load_page(page).get_text("dict", sort=True)
+        bruto = self._doc.load_page(page).get_text("dict", sort=sort)
         linhas: list[TextLine] = []
         for bloco in bruto.get("blocks", []):
             for linha in bloco.get("lines", []):

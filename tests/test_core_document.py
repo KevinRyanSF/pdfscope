@@ -141,3 +141,22 @@ def test_png_com_grifo_nao_deixa_anotacao_na_pagina(pdf_simples):
         sem = doc.render_page_png(1, RenderOptions(zoom=1.0))
         assert com != sem  # o grifo aparece
         assert doc.render_page_png(1, RenderOptions(zoom=1.0)) == sem  # e não fica para trás
+
+
+def test_texto_original_respeita_colunas_por_padrao(tmp_path):
+    from pdfscope.core.pymupdf_compat import pymupdf
+
+    caminho = tmp_path / "colunas.pdf"
+    doc = pymupdf.open()
+    pagina = doc.new_page()
+    # coluna esquerda escrita primeiro, com duas linhas; a direita começa na mesma altura
+    pagina.insert_text((50, 100), "Esquerda um", fontsize=11)
+    pagina.insert_text((50, 200), "Esquerda dois", fontsize=11)
+    pagina.insert_text((320, 100), "Direita um", fontsize=11)
+    doc.save(caminho)
+    doc.close()
+    with PdfDocument(str(caminho)) as d:
+        normal = d.page_text_raw(0)
+        assert normal.index("Esquerda dois") < normal.index("Direita um")  # ordem do PDF: coluna por coluna
+        ordenado = d.page_text_raw(0, sort=True)
+        assert ordenado.index("Direita um") < ordenado.index("Esquerda dois")  # sort intercala
