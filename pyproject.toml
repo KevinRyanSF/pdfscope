@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pdfscope"
+version = "0.2.0"
+description = "Leitor de PDF embutível, com abas, miniaturas, busca e marcadores."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Kevin Ryan" }]
+keywords = ["pdf", "viewer", "pymupdf", "pyqt6", "reader"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Text Processing",
+]
+
+# O núcleo só precisa do PyMuPDF. A interface é opcional de propósito: assim o
+# pacote pode ser usado num servidor sem nada de Qt instalado.
+dependencies = ["PyMuPDF>=1.24"]
+
+[project.optional-dependencies]
+qt = ["PyQt6>=6.6"]
+dev = ["PyQt6>=6.6", "pytest>=8.0", "pytest-qt>=4.4"]
+
+[project.scripts]
+pdfscope = "pdfscope.app:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
